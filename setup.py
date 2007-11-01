@@ -7,6 +7,6 @@ setup(name='scorpion_server',
       description='A simple web server using SSL and Basic auth.',
       author='Jeffrey Scudder',
       author_email='me@jeffscudder.com',
-      url='...',
+      url='http://code.google.com/p/scorpion-server/',
       packages=['scorpion_server'],
       package_dir = {'scorpion_server':'src/scorpion_server'})
