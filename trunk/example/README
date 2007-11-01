@@ -1,0 +1,27 @@
+Before running the example server, you will need to generate an SSL 
+certificate used for setting up an HTTPS connection. Here's a command 
+which will prompt you for information for creating a new certificate:
+
+openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes
+
+Running the above command will create a file named server.pem and this
+file must be placed in the config directory.
+
+After creating your server.pem file, you are ready to run the example
+server. If you have not already installed the scorpion server modules,
+run:
+
+python setup.py install 
+
+in the project's root directory. Then start the example server by running:
+
+python run_example_server.py
+
+Once the server is up and running, open your web browser and point it at
+
+https://localhost/public
+
+To test authentication, try accessing the following resource, which is 
+protected by a username and password ("user" and "password").
+
+https://localhost/user

@@ -25,6 +25,16 @@ from SimpleHTTPServer import SimpleHTTPRequestHandler
 from OpenSSL import SSL
 
 
+CONFIGURATION_DIRECTORY = 'config'
+USER_DATA_FILENAME = 'users'
+PERMISSIONS_DATA_FILENAME = 'permissions'
+SSL_PEM_FILENAME = 'server.pem'
+RESOURCE_DIRECTORY = 'hosted'
+DEFAULT_RESOURCE_FILENAME = 'index'
+SERVER_PORT = 443
+SERVER_AUTH_REALM = 'scorpion server'
+
+
 class BadCredentialsError(Exception):
   pass
 
@@ -36,7 +46,7 @@ class ScorpionResourceServer(HTTPServer):
     ctx = SSL.Context(SSL.SSLv23_METHOD)
     # Server.pem's location (containing the server private key and
     # the server certificate).
-    fpem = os.path.join('config', 'server.pem')
+    fpem = os.path.join(CONFIGURATION_DIRECTORY, SSL_PEM_FILENAME)
     ctx.use_privatekey_file(fpem)
     ctx.use_certificate_file(fpem)
     self.socket = SSL.Connection(ctx, socket.socket(self.address_family,
@@ -168,9 +178,11 @@ class ScorpionResourceRequestHandler(SimpleHTTPRequestHandler):
     self.rfile = socket._fileobject(self.request, 'rb', self.rbufsize)
     self.wfile = socket._fileobject(self.request, 'wb', self.wbufsize)
     self.user_data = UserData()
-    self.user_data.LoadUserCredentials(os.path.join('config', 'users'))
-    self.user_data.LoadPermissionsMap(os.path.join('config', 'permissions'))
-    self.data_store = DataStore('hosted', 'index')
+    self.user_data.LoadUserCredentials(os.path.join(CONFIGURATION_DIRECTORY,
+                                                    USER_DATA_FILENAME))
+    self.user_data.LoadPermissionsMap(os.path.join(CONFIGURATION_DIRECTORY,
+                                                   PERMISSIONS_DATA_FILENAME))
+    self.data_store = DataStore(RESOURCE_DIRECTORY, DEFAULT_RESOURCE_FILENAME)
     
   def _UserHasReadPermissions(self, resource):
     return self._UserCanPerformAction(self.user_data.UserCanReadResource, resource)
@@ -239,7 +251,7 @@ class ScorpionResourceRequestHandler(SimpleHTTPRequestHandler):
       print 'Wrote the resource to disk!'
       
   def AskUserToAuthenticate(self):
-    realm = 's_cubed server'
+    realm = SERVER_AUTH_REALM
     self.wfile.write('HTTP/1.0 401 Authentication Required\n'
                        'Server: %s\n'
                        'Date: %s\n'
@@ -250,7 +262,7 @@ class ScorpionResourceRequestHandler(SimpleHTTPRequestHandler):
 
 def StartServer(HandlerClass=ScorpionResourceRequestHandler,
                 ServerClass=ScorpionResourceServer):
-    server_address = ('', 443) # (address, port)
+    server_address = ('', SERVER_PORT) # (address, port)
     httpd = ServerClass(server_address, HandlerClass)
     sa = httpd.socket.getsockname()
     print 'Serving HTTPS on', sa[0], 'port', sa[1]
