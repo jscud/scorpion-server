@@ -1,0 +1,45 @@
+<html>
+  <head>
+    <script src="https://localhost/public/client.js"></script>
+    <script>
+    
+    var client;
+    
+    function handleResponse(status, data) {
+      var dataField = document.getElementById('data');
+      if (status >= 200 && status < 300) {
+        dataField.value = data;
+      } else {
+        dataField.value = ['Error:', status, data].join(' ');
+      }
+    };
+    
+    function getData() {
+      var targetResource = document.getElementById('resource');
+      if (targetResource && targetResource.value) {
+        client.get(targetResource.value);
+      }
+    };
+    
+    function postData() {
+      var targetResource = document.getElementById('resource');
+      var postData = document.getElementById('data');
+      if (targetResource && targetResource.value && postData) {
+        client.post(postData.value, targetResource.value);
+      }
+    };
+    
+    function init() {
+      client = new scorpion_server.Client('user', 'password', handleResponse);
+    };
+    
+    </script>
+  </head>
+  <body onload="init();">
+    <table>
+      <tr><td>Target Resource</td><td><input id="resource" type="text" size="80" value="/user"></input></td></tr>
+      <tr><td>Resource Data</td><td><textarea id="data" type="text" rows="10" cols="80"></textarea></td></tr>
+      <tr><td><a onclick="getData();">Get</a></td><td><a onclick="postData();">Post</a></td></tr>
+    </table>
+  </body>
+</html>
