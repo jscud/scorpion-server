@@ -215,13 +215,14 @@ class ScorpionResourceRequestHandler(SimpleHTTPRequestHandler):
       # a 401 to ask for credentials.
       if user == '':
         self.AskUserToAuthenticate()
-        print 'User could not read because they were not logged in.'
+        print ('User could not read', resource, 
+            'because they were not logged in.')
         return False
       else:
         # If the user does not have permission and they are logged in, send 
         # a 403.
         self.send_error(403)
-        print 'User does not have permissions to read.'
+        print 'User does not have permissions to read', resource, '.'
         return False
     return True
   
@@ -233,11 +234,11 @@ class ScorpionResourceRequestHandler(SimpleHTTPRequestHandler):
         # If the resource exists, send it!
         resource_data = self.data_store.ReadResource(self.path)
         self.wfile.write(resource_data)
-        print 'Sent the resource!'
+        print 'Sent the resource', self.path
         return
       else:
         # The resource does not exist, so send a 404.
-        print 'Resource not found.' 
+        print 'Resource', self.path, 'not found.' 
         self.send_error(404)
         return
       
@@ -248,7 +249,7 @@ class ScorpionResourceRequestHandler(SimpleHTTPRequestHandler):
       print 'The request body was:', request_body
       resource_data = self.data_store.WriteResource(self.path, request_body)
       self.wfile.write(resource_data)
-      print 'Wrote the resource to disk!'
+      print 'Wrote the resource', self.path, 'to disk!'
       
   def AskUserToAuthenticate(self):
     realm = SERVER_AUTH_REALM
