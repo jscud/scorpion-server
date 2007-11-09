@@ -184,6 +184,16 @@ class ScorpionResourceRequestHandler(SimpleHTTPRequestHandler):
                                                    PERMISSIONS_DATA_FILENAME))
     self.data_store = DataStore(RESOURCE_DIRECTORY, DEFAULT_RESOURCE_FILENAME)
     
+  def _RemoveUrlParameters(self, url):
+    """Strips all URL parameters from the request. 
+    
+    I may not want this behavior later, but now I'm using it to overcome
+    IE caching when using XmlHttpRequest. Because the server throws away
+    URL parameters, the JavaScript client will be able to send garbage params
+    to ensure a unique URL and avoid caching on GET requests.
+    """
+    return url.split('?')[0]    
+    
   def _UserHasReadPermissions(self, resource):
     return self._UserCanPerformAction(self.user_data.UserCanReadResource, resource)
     
@@ -227,18 +237,19 @@ class ScorpionResourceRequestHandler(SimpleHTTPRequestHandler):
     return True
   
   def do_GET(self):
-    if self._UserHasReadPermissions(self.path):
+    resource = self._RemoveUrlParameters(self.path)
+    if self._UserHasReadPermissions(resource):
       # The user has permissions to read the resource.
       # Check to make sure that the resource is valid.
-      if self.data_store.ResourceExists(self.path):
+      if self.data_store.ResourceExists(resource):
         # If the resource exists, send it!
-        resource_data = self.data_store.ReadResource(self.path)
+        resource_data = self.data_store.ReadResource(resource)
         self.wfile.write(resource_data)
-        print 'Sent the resource', self.path
+        print 'Sent the resource', resource
         return
       else:
         # The resource does not exist, so send a 404.
-        print 'Resource', self.path, 'not found.' 
+        print 'Resource', resource, 'not found.' 
         self.send_error(404)
         return
       
