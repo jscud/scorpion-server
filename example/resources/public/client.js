@@ -92,6 +92,11 @@ scorpion_server.Client.prototype.setCredentials = function(username,
  *
  */
 scorpion_server.Client.prototype.get = function(url) {
+  // Append a unique URL parameter to the URL to prevent IE from using a 
+  // cached value instead of asking the server. The server will ignore
+  // all URL parameters.
+  var currentTime = new Date();
+  url = [url, '?timestamp=', currentTime.toGMTString()].join('');
   this.http.open("GET", url, true);
   if (this.encodedCredentials) {
     this.http.setRequestHeader('Authorization', 
