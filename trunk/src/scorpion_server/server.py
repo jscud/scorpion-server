@@ -33,12 +33,34 @@ RESOURCE_DIRECTORY = 'hosted'
 DEFAULT_RESOURCE_FILENAME = 'index'
 SERVER_PORT = 443
 SERVER_AUTH_REALM = 'scorpion server'
+LOG_FILE_NAME = 'log'
 
 
 class BadCredentialsError(Exception):
   pass
-
   
+  
+class Logger(object):
+    
+  def __init__(self):
+    self.log_file = None
+    
+  def openLog(self):
+    self.log_file = open(LOG_FILE_NAME, 'w')
+
+  def writeln(self, text):
+    if self.log_file:
+      self.log_file.write('%s\n' % text)
+
+      
+def OpenLog(logger):
+  logger.openLog()
+  
+  
+# Module level global object to
+log = Logger()
+
+
 class ScorpionResourceServer(HTTPServer):
 
   def __init__(self, server_address, HandlerClass):
@@ -217,7 +239,7 @@ class ScorpionResourceRequestHandler(SimpleHTTPRequestHandler):
     # If the user's credentials were bad, send a 401 response.
     if user is None:
       self.AskUserToAuthenticate()
-      print 'User sent bad credentials.'
+      log.writeln('User sent bad credentials.')
       return False
     # Check to see if the user has permissions to read the resource.
     if not user_may_do_action(user, self.path):
@@ -225,14 +247,15 @@ class ScorpionResourceRequestHandler(SimpleHTTPRequestHandler):
       # a 401 to ask for credentials.
       if user == '':
         self.AskUserToAuthenticate()
-        print ('User could not read', resource, 
+        log.writeln('User could not read' + resource +
             'because they were not logged in.')
         return False
       else:
         # If the user does not have permission and they are logged in, send 
         # a 403.
         self.send_error(403)
-        print 'User does not have permissions to read', resource, '.'
+        log.writeln('User does not have permissions to read %s.' % ( 
+            resource))
         return False
     return True
   
@@ -245,11 +268,11 @@ class ScorpionResourceRequestHandler(SimpleHTTPRequestHandler):
         # If the resource exists, send it!
         resource_data = self.data_store.ReadResource(resource)
         self.wfile.write(resource_data)
-        print 'Sent the resource', resource
+        log.writeln('Sent the resource %s' % resource)
         return
       else:
         # The resource does not exist, so send a 404.
-        print 'Resource', resource, 'not found.' 
+        log.writeln('Resource %s not found.' % resource)
         self.send_error(404)
         return
       
@@ -257,10 +280,10 @@ class ScorpionResourceRequestHandler(SimpleHTTPRequestHandler):
     if self._UserHasWritePermissions(self.path):
       data_length = int(self.headers.getheader('content-length'))
       request_body = self.rfile.read(data_length)
-      print 'The request body was:', request_body
+      log.writeln('The request body was: %s' % request_body)
       resource_data = self.data_store.WriteResource(self.path, request_body)
       self.wfile.write(resource_data)
-      print 'Wrote the resource', self.path, 'to disk!'
+      log.writeln('Wrote the resource %s to disk.' % self.path)
       
   def AskUserToAuthenticate(self):
     realm = SERVER_AUTH_REALM
@@ -277,6 +300,7 @@ def StartServer(HandlerClass=ScorpionResourceRequestHandler,
     server_address = ('', SERVER_PORT) # (address, port)
     httpd = ServerClass(server_address, HandlerClass)
     sa = httpd.socket.getsockname()
+    log.openLog()
     print 'Serving HTTPS on', sa[0], 'port', sa[1]
     httpd.serve_forever()
 
